@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/assets/televault-wordmark.png" width="520" alt="TeleVault" />
+  <img src="public/assets/televault-wordmark.png" width="320" alt="TeleVault" />
 </p>
 
 # TeleVault
