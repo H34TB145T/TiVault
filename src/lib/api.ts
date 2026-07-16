@@ -8,7 +8,7 @@ const demoDashboard: Dashboard = {
     { id: "demo-1", name: "Northern lights.jpg", category: "Photos", size: 14_806_318, mimeType: "image/jpeg", encrypted: false, cached: true, chunkCount: 1, accountId: "personal", accountName: "Personal", createdAt: new Date().toISOString(), status: "ready", thumbnail: "/assets/demo-aurora.svg", favorite: true, tags: ["travel"] },
     { id: "demo-2", name: "Documentary master.mkv", category: "Videos", size: 10_847_392_104, mimeType: "video/x-matroska", encrypted: true, cached: false, chunkCount: 6, accountId: "personal", accountName: "Personal", createdAt: new Date(Date.now() - 86400000).toISOString(), status: "ready", favorite: false, tags: [] },
     { id: "demo-3", name: "Project archive.zip", category: "Archives", size: 1_352_921_088, mimeType: "application/zip", encrypted: true, cached: true, chunkCount: 1, accountId: "personal", accountName: "Personal", createdAt: new Date(Date.now() - 172800000).toISOString(), status: "ready", favorite: false, tags: ["project"] },
-    { id: "demo-4", name: "TeleVault specification.pdf", category: "Documents", size: 3_801_220, mimeType: "application/pdf", encrypted: false, cached: true, chunkCount: 1, accountId: "personal", accountName: "Personal", createdAt: new Date(Date.now() - 604800000).toISOString(), status: "ready", favorite: false, tags: [] }
+    { id: "demo-4", name: "TiVault specification.pdf", category: "Documents", size: 3_801_220, mimeType: "application/pdf", encrypted: false, cached: true, chunkCount: 1, accountId: "personal", accountName: "Personal", createdAt: new Date(Date.now() - 604800000).toISOString(), status: "ready", favorite: false, tags: [] }
   ],
   folders: [],
   transfers: [
@@ -48,7 +48,7 @@ async function webFetch<T>(path: string, method = "GET", body?: unknown): Promis
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body)
   });
-  if (!response.ok) throw new Error(await response.text() || `TeleVault companion returned ${response.status}`);
+  if (!response.ok) throw new Error(await response.text() || `TiVault companion returned ${response.status}`);
   return response.json() as Promise<T>;
 }
 
@@ -110,7 +110,7 @@ async function call<T>(command: string, args?: Record<string, unknown>, fallback
       case "complete_telegram_login": return await webFetch<T>("/api/auth/code", "POST", args);
       case "complete_telegram_password": return await webFetch<T>("/api/auth/password", "POST", args);
       case "export_recovery_key": return (await webFetch<{ key: string }>("/api/recovery")).key as T;
-      default: throw new Error("This action is available in the TeleVault desktop window.");
+      default: throw new Error("This action is available in the TiVault desktop window.");
     }
   } catch (error) {
     if (fallback) return fallback();
@@ -188,7 +188,7 @@ export const api = {
     return selection ? (Array.isArray(selection) ? selection : [selection]) : [];
   },
   chooseFolder: async (): Promise<string | null> => {
-    if (!isTauri()) return window.prompt("Enter the full path of a folder on the computer running TeleVault:");
+    if (!isTauri()) return window.prompt("Enter the full path of a folder on the computer running TiVault:");
     const { open } = await import("@tauri-apps/plugin-dialog");
     const selection = await open({ multiple: false, directory: true });
     return typeof selection === "string" ? selection : null;

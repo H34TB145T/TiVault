@@ -6,7 +6,7 @@ on:
       tag:
         description: Existing release tag to build
         required: true
-        default: v0.1.0-alpha
+        default: v0.1.1-alpha
   push:
     tags: ["v*"]
 
@@ -63,13 +63,13 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           TELEVAULT_UPDATE_PUBLIC_KEY: configured
-          TELEVAULT_UPDATE_ENDPOINT: https://github.com/H34TB145T/TeleVault/releases/latest/download/latest.json
+          TELEVAULT_UPDATE_ENDPOINT: https://github.com/H34TB145T/TiVault/releases/latest/download/latest.json
         with:
           args: ${{ matrix.args }}
           tagName: ${{ inputs.tag || github.ref_name }}
-          releaseName: TeleVault ${{ inputs.tag || github.ref_name }}
+          releaseName: TiVault ${{ inputs.tag || github.ref_name }}
           releaseBody: |
-            TeleVault is alpha software. Back up your recovery key and test with non-critical files first.
+            TiVault is alpha software. Back up your recovery key and test with non-critical files first.
 
             These builds are not Apple-notarized or commercially code-signed. Follow the unsigned installation instructions in the README and verify the published SHA-256 checksums.
           releaseDraft: true
@@ -82,7 +82,7 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
           ASSET_PATTERN: ${{ matrix.checksum_pattern }}
         run: |
-          $release = gh api "repos/H34TB145T/TeleVault/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
+          $release = gh api "repos/H34TB145T/TiVault/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
           $assets = $release.assets | Where-Object {
             $_.name -match $env:ASSET_PATTERN -and -not $_.name.EndsWith('.sig')
           }
@@ -95,7 +95,7 @@ jobs:
           }
           $checksumFile = "SHA256SUMS-${{ matrix.checksum }}.txt"
           $lines | Set-Content -Encoding utf8 $checksumFile
-          gh release upload $env:RELEASE_TAG $checksumFile --repo H34TB145T/TeleVault --clobber
+          gh release upload $env:RELEASE_TAG $checksumFile --repo H34TB145T/TiVault --clobber
 
   publish:
     name: Publish verified release
@@ -108,7 +108,7 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
-          repo='H34TB145T/TeleVault'
+          repo='H34TB145T/TiVault'
           tmp=$(mktemp -d)
           trap 'rm -rf "$tmp"' EXIT
           assets=$(gh release view "$RELEASE_TAG" --repo "$repo" --json assets)
@@ -132,7 +132,7 @@ jobs:
           done
           jq -n \
             --arg version "${RELEASE_TAG#v}" \
-            --arg notes 'TeleVault alpha release. Back up your recovery key and test with non-critical files first.' \
+            --arg notes 'TiVault alpha release. Back up your recovery key and test with non-critical files first.' \
             --arg pub_date "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
             --arg mac_url "$mac_url" --rawfile mac_sig "$mac_sig" \
             --arg appimage_url "$appimage_url" --rawfile appimage_sig "$appimage_sig" \
@@ -166,5 +166,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: >-
-          gh release edit "$RELEASE_TAG" --repo H34TB145T/TeleVault
+          gh release edit "$RELEASE_TAG" --repo H34TB145T/TiVault
           --draft=false --prerelease=false

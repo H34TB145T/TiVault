@@ -122,10 +122,10 @@ pub async fn serve(core: Arc<Core>, static_root: PathBuf) {
     match tokio::net::TcpListener::bind("127.0.0.1:7468").await {
         Ok(listener) => {
             if let Err(error) = axum::serve(listener, app).await {
-                eprintln!("TeleVault web companion stopped: {error}");
+                eprintln!("TiVault web companion stopped: {error}");
             }
         }
-        Err(error) => eprintln!("TeleVault web companion could not start: {error}"),
+        Err(error) => eprintln!("TiVault web companion could not start: {error}"),
     }
 }
 
@@ -143,7 +143,7 @@ async fn require_unlocked(
         Response::builder()
             .status(StatusCode::LOCKED)
             .header(CONTENT_TYPE, "text/plain; charset=utf-8")
-            .body(Body::from("TeleVault is locked"))
+            .body(Body::from("TiVault is locked"))
             .unwrap()
     }
 }

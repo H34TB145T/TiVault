@@ -22,6 +22,12 @@ const AUTH_TIMEOUT: Duration = Duration::from_secs(45);
 const FILE_OPERATION_TIMEOUT: Duration = Duration::from_secs(6 * 60 * 60);
 const PREVIEW_RANGE_TIMEOUT: Duration = Duration::from_secs(5 * 60);
 
+fn is_vault_manifest_document(caption: &str, filename: &str) -> bool {
+    caption.starts_with("#TiVaultManifest")
+        || caption.starts_with("#TeleVaultManifest")
+        || filename.ends_with(".tvmanifest.json")
+}
+
 #[derive(Clone)]
 struct ClientRoute {
     auth: watch::Sender<Option<AuthorizationState>>,
@@ -107,7 +113,7 @@ impl TelegramManager {
         stop: Arc<AtomicBool>,
     ) -> AppResult<std::thread::JoinHandle<()>> {
         Ok(std::thread::Builder::new()
-            .name("televault-tdlib".into())
+            .name("tivault-tdlib".into())
             .spawn(move || {
                 while !stop.load(Ordering::Acquire) {
                     match tdlib_rs::receive() {
@@ -375,7 +381,7 @@ impl TelegramManager {
                 account.api_id,
                 account.api_hash.clone(),
                 "en-GB".into(),
-                "TeleVault Desktop".into(),
+                "TiVault Desktop".into(),
                 "macOS".into(),
                 env!("CARGO_PKG_VERSION").into(),
                 client_id,
@@ -477,7 +483,7 @@ impl TelegramManager {
             }
             AuthorizationState::WaitEmailAddress(_) | AuthorizationState::WaitEmailCode(_) => {
                 return Err(AppError::Telegram(
-                    "Telegram requires email verification for this sign-in. Complete or review the login in the official Telegram app, then retry with TeleVault's QR code."
+                    "Telegram requires email verification for this sign-in. Complete or review the login in the official Telegram app, then retry with TiVault's QR code."
                         .into(),
                 ));
             }
@@ -862,7 +868,7 @@ impl TelegramManager {
             ChatType::Private(private) => private.user_id,
             _ => {
                 return Err(AppError::Message(
-                    "TeleVault currently sends files only to individual Telegram users".into(),
+                    "TiVault currently sends files only to individual Telegram users".into(),
                 ))
             }
         };
@@ -1157,7 +1163,7 @@ impl TelegramManager {
             MessageContent::MessageDocument(document) => document.document.document,
             _ => {
                 return Err(AppError::Telegram(format!(
-                    "Telegram message {message_id} does not contain a TeleVault file"
+                    "Telegram message {message_id} does not contain a TiVault file"
                 )))
             }
         };
@@ -1243,7 +1249,7 @@ impl TelegramManager {
             MessageContent::MessageDocument(document) => document.document.document,
             _ => {
                 return Err(AppError::Telegram(format!(
-                    "Telegram message {message_id} does not contain a TeleVault file"
+                    "Telegram message {message_id} does not contain a TiVault file"
                 )))
             }
         };
@@ -1395,9 +1401,10 @@ impl TelegramManager {
                 new_messages += 1;
                 scanned += 1;
                 if let MessageContent::MessageDocument(document) = message.content {
-                    let is_manifest = document.caption.text.starts_with("#TeleVaultManifest")
-                        || document.document.file_name.ends_with(".tvmanifest.json");
-                    if is_manifest {
+                    if is_vault_manifest_document(
+                        &document.caption.text,
+                        &document.document.file_name,
+                    ) {
                         manifests.push(message.id);
                     }
                 }
@@ -1457,5 +1464,24 @@ impl TelegramManager {
                 .map_err(Self::td_error)?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_vault_manifest_document;
+
+    #[test]
+    fn recovery_finds_legacy_and_rebranded_manifests() {
+        assert!(is_vault_manifest_document(
+            "#TeleVaultManifest v2 file=legacy",
+            "manifest-legacy.tvmanifest.json"
+        ));
+        assert!(is_vault_manifest_document(
+            "#TiVaultManifest v2 file=current",
+            "manifest-current.tvmanifest.json"
+        ));
+        assert!(is_vault_manifest_document("", "manifest-portable.tvmanifest.json"));
+        assert!(!is_vault_manifest_document("#TiVaultChunk v1", "chunk.bin"));
     }
 }

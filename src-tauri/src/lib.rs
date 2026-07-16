@@ -105,7 +105,7 @@ pub fn run() {
             commands::export_recovery_key
         ])
         .build(tauri::generate_context!())
-        .expect("error while building TeleVault");
+        .expect("error while building TiVault");
 
     app.run(|app_handle, event| {
         if matches!(event, tauri::RunEvent::Exit) {

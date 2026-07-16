@@ -4805,43 +4805,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d792369bc9984e0a469c0acff4dea61f3bc63c4a6a4a70005e109ba899d7762"
 
 [[package]]
-name = "televault"
-version = "0.1.0-alpha"
-dependencies = [
- "argon2",
- "axum",
- "base64 0.22.1",
- "chacha20poly1305",
- "chrono",
- "dirs",
- "fs2",
- "hex",
- "keyring",
- "mime_guess",
- "rand 0.9.5",
- "rusqlite",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-notification",
- "tauri-plugin-opener",
- "tauri-plugin-process",
- "tauri-plugin-updater",
- "tdlib-rs",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tower-http",
- "uuid",
- "walkdir",
- "windows-sys 0.61.2",
- "zeroize",
-]
-
-[[package]]
 name = "tempfile"
 version = "3.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4958,6 +4921,43 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
+
+[[package]]
+name = "tivault"
+version = "0.1.1-alpha"
+dependencies = [
+ "argon2",
+ "axum",
+ "base64 0.22.1",
+ "chacha20poly1305",
+ "chrono",
+ "dirs",
+ "fs2",
+ "hex",
+ "keyring",
+ "mime_guess",
+ "rand 0.9.5",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-notification",
+ "tauri-plugin-opener",
+ "tauri-plugin-process",
+ "tauri-plugin-updater",
+ "tdlib-rs",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tower-http",
+ "uuid",
+ "walkdir",
+ "windows-sys 0.61.2",
+ "zeroize",
+]
 
 [[package]]
 name = "tokio"

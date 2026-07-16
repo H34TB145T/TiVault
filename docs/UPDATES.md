@@ -1,6 +1,6 @@
-# Signed TeleVault updates
+# Signed TiVault updates
 
-TeleVault release artifacts use Tauri's mandatory updater signatures. This signature is independent from Apple or Microsoft commercial code signing: it lets an installed TeleVault build reject an update that was not signed by the maintainer's protected updater key.
+TiVault release artifacts use Tauri's mandatory updater signatures. This signature is independent from Apple or Microsoft commercial code signing: it lets an installed TiVault build reject an update that was not signed by the maintainer's protected updater key.
 
 The public verification key and GitHub Releases endpoint are committed in `src-tauri/tauri.release.conf.json`. The encrypted private key and its password exist only in the maintainer's protected local key store and the repository secrets named `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 

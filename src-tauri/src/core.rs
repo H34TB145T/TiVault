@@ -254,7 +254,7 @@ impl Core {
 
     pub fn ensure_unlocked(&self) -> AppResult<()> {
         if self.locked.load(Ordering::SeqCst) {
-            return Err(AppError::Message("TeleVault is locked".into()));
+            return Err(AppError::Message("TiVault is locked".into()));
         }
         Ok(())
     }
@@ -500,7 +500,7 @@ impl Core {
             .upload_document(
                 account_id,
                 &path,
-                &format!("#TeleVaultManifest v2 file={}", manifest.file_id),
+                &format!("#TiVaultManifest v2 file={}", manifest.file_id),
                 |_, _| true,
             )
             .await
@@ -1693,7 +1693,7 @@ impl Core {
         let file = self.catalog.file_context(file_id)?;
         if file.encrypted && !allow_decrypt {
             return Err(AppError::Message(
-                "Confirm that TeleVault may send a decrypted copy of this encrypted file".into(),
+                "Confirm that TiVault may send a decrypted copy of this encrypted file".into(),
             ));
         }
         let target = self
@@ -1724,7 +1724,7 @@ impl Core {
         let files = self.folder_share_files(folder_path)?;
         if files.iter().any(|file| file.encrypted) && !allow_decrypt {
             return Err(AppError::Message(
-                "Confirm that TeleVault may send readable copies of encrypted files in this folder"
+                "Confirm that TiVault may send readable copies of encrypted files in this folder"
                     .into(),
             ));
         }
@@ -1901,7 +1901,7 @@ impl Core {
                 .file_name()
                 .and_then(|name| name.to_str())
                 .filter(|name| !name.is_empty())
-                .unwrap_or("TeleVault shared file");
+                .unwrap_or("TiVault shared file");
             let destination = work.join(safe_name);
             let total_remote = chunks.iter().map(|chunk| chunk.size).sum::<u64>();
             let total_work = total_remote.saturating_add(file.size).max(1);
@@ -2073,10 +2073,10 @@ impl Core {
             format!("@{}", target.username)
         };
         let caption = if file.folder_path.is_empty() {
-            "Sent securely from TeleVault".to_string()
+            "Sent securely from TiVault".to_string()
         } else {
             format!(
-                "Sent securely from TeleVault · Folder: {}",
+                "Sent securely from TiVault · Folder: {}",
                 file.folder_path
             )
         };
@@ -2359,7 +2359,7 @@ impl Core {
                 }
 
                 let caption = format!(
-                    "#TeleVaultChunk v1 file={} part={}/{} encrypted={}",
+                    "#TiVaultChunk v1 file={} part={}/{} encrypted={}",
                     file_id,
                     chunk.index + 1,
                     total_parts,
@@ -2501,7 +2501,7 @@ impl Core {
 
         let destination_root = dirs::download_dir()
             .unwrap_or_else(|| self.work_dir.join("completed"))
-            .join("TeleVault");
+            .join("TiVault");
         let mut folder_paths = self.catalog.folder_paths_in_tree(&path)?;
         if !folder_paths.iter().any(|folder| folder == &path) {
             folder_paths.insert(0, path.clone());
@@ -2656,7 +2656,7 @@ impl Core {
         }
         let destination_dir = dirs::download_dir()
             .unwrap_or_else(|| self.work_dir.join("completed"))
-            .join("TeleVault");
+            .join("TiVault");
         let destination_dir = safe_folder_destination(&destination_dir, &file.folder_path);
         fs::create_dir_all(&destination_dir)?;
         let destination = unique_destination(&destination_dir, &file.name);
@@ -2741,7 +2741,7 @@ impl Core {
             file.size,
             0,
             Some(0),
-            Some("Saved to Downloads/TeleVault"),
+            Some("Saved to Downloads/TiVault"),
         )?;
         let _ = fs::remove_dir_all(work);
         Ok(())
@@ -3240,7 +3240,7 @@ fn preview_kind(file: &FileContext) -> (String, Option<String>) {
     if matches!(extension.as_str(), "doc" | "docx" | "rtf" | "rtfd" | "odt") {
         return (
             "document".into(),
-            Some("TeleVault extracts plain text locally with macOS; document scripts and macros are never executed.".into()),
+            Some("TiVault extracts plain text locally with macOS; document scripts and macros are never executed.".into()),
         );
     }
     let message = if matches!(extension.as_str(), "xls" | "xlsx" | "ppt" | "pptx") {
@@ -3620,10 +3620,10 @@ mod tests {
     fn download_folder_paths_cannot_escape_the_destination() {
         assert_eq!(
             safe_folder_destination(
-                std::path::Path::new("/Downloads/TeleVault"),
+                std::path::Path::new("/Downloads/TiVault"),
                 "../Project/docs",
             ),
-            std::path::Path::new("/Downloads/TeleVault/Project/docs")
+            std::path::Path::new("/Downloads/TiVault/Project/docs")
         );
     }
 

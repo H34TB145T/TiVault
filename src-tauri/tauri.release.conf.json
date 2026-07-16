@@ -6,7 +6,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDI3MDgxNkY5MkZBMjIyNDUKUldSRklxSXYrUllJSjZuSUQ2YzVpNnF3anBoWlJFcU8vWUZIRzIrQloyZEJ4QmR3cDBVZU43RW4K",
       "endpoints": [
-        "https://github.com/H34TB145T/TeleVault/releases/latest/download/latest.json"
+        "https://github.com/H34TB145T/TiVault/releases/latest/download/latest.json"
       ]
     }
   }

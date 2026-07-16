@@ -1,4 +1,4 @@
-# TeleVault architecture
+# TiVault architecture
 
 ## Data flow
 
@@ -60,12 +60,12 @@ Remote files are fetched in independently useful 8 MiB blocks. Encrypted blocks 
 
 The UI resolves an exact public username or lists existing private chats. Resolution creates a random, single-use, five-minute capability bound to the source file, Telegram account and destination chat. The UI then asks for a second confirmation before queuing a transfer.
 
-TeleVault verifies or reconstructs the original file locally and sends it as a normal Telegram document. Encrypted vault files require an explicit readable-copy confirmation and are decrypted only inside a private temporary directory. Each source chunk and the final plaintext hash are checked, temporary data is removed on completion, cancellation or error, and a late cancellation removes a just-sent destination message when possible.
+TiVault verifies or reconstructs the original file locally and sends it as a normal Telegram document. Encrypted vault files require an explicit readable-copy confirmation and are decrypted only inside a private temporary directory. Each source chunk and the final plaintext hash are checked, temporary data is removed on completion, cancellation or error, and a late cancellation removes a just-sent destination message when possible.
 
-Folder sharing verifies one recipient capability, requires every contained file to use the same Telegram account, and creates one independently cancellable transfer per file. Telegram chats do not have a portable folder object, so the relative TeleVault folder path is included in each document caption.
+Folder sharing verifies one recipient capability, requires every contained file to use the same Telegram account, and creates one independently cancellable transfer per file. Telegram chats do not have a portable folder object, so the relative TiVault folder path is included in each document caption.
 
 ## Transfer strategy
 
-TeleVault streams input and uses bounded buffers. It never loads a complete large file into memory. Telegram's MTProto client performs each document's internal 512 KB upload-part scheduling. TeleVault controls concurrency at the logical-file level and always respects server wait errors.
+TiVault streams input and uses bounded buffers. It never loads a complete large file into memory. Telegram's MTProto client performs each document's internal 512 KB upload-part scheduling. TiVault controls concurrency at the logical-file level and always respects server wait errors.
 
-Before an upload begins, TeleVault checks for a ready file with the same size. Only then does it stream a SHA-256 pass; Telegram transfer is skipped only for an exact same-account hash match. Logical copies reuse immutable verified Telegram chunk messages but receive a new manifest. Reference-aware deletion preserves shared chunks until the last logical copy is removed.
+Before an upload begins, TiVault checks for a ready file with the same size. Only then does it stream a SHA-256 pass; Telegram transfer is skipped only for an exact same-account hash match. Logical copies reuse immutable verified Telegram chunk messages but receive a new manifest. Reference-aware deletion preserves shared chunks until the last logical copy is removed.

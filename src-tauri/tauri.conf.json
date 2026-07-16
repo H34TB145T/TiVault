@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "TeleVault",
-  "version": "0.1.0-alpha",
+  "productName": "TiVault",
+  "version": "0.1.1-alpha",
   "identifier": "app.televault.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "TeleVault",
+        "title": "TiVault",
         "width": 1280,
         "height": 820,
         "minWidth": 640,
@@ -33,7 +33,7 @@
     "targets": "all",
     "category": "Utility",
     "shortDescription": "Your files, secured in Telegram.",
-    "longDescription": "TeleVault is a private, cross-platform file manager for Telegram Saved Messages with resilient chunking and optional client-side encryption.",
+    "longDescription": "TiVault is a private, cross-platform file manager for Telegram Saved Messages with resilient chunking and optional client-side encryption.",
     "copyright": "Copyright © 2026 H34TB145T",
     "resources": ["web-dist"],
     "macOS": {

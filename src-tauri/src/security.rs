@@ -23,7 +23,7 @@ impl TelegramCredentialStore {
             Ok(value) => Ok(Some(value)),
             Err(keyring::Error::NoEntry) => Ok(None),
             Err(_) => Err(AppError::Crypto(
-                "TeleVault could not read this Telegram API hash from the operating-system credential vault"
+                "TiVault could not read this Telegram API hash from the operating-system credential vault"
                     .into(),
             )),
         }
@@ -38,13 +38,13 @@ impl TelegramCredentialStore {
         let entry = Self::entry(account_id)?;
         entry.set_password(api_hash).map_err(|_| {
             AppError::Crypto(
-                "TeleVault could not protect the Telegram API hash in the operating-system credential vault"
+                "TiVault could not protect the Telegram API hash in the operating-system credential vault"
                     .into(),
             )
         })?;
         let verified = entry.get_password().map_err(|_| {
             AppError::Crypto(
-                "TeleVault could not verify the Telegram API hash after storing it".into(),
+                "TiVault could not verify the Telegram API hash after storing it".into(),
             )
         })?;
         if verified != api_hash {
@@ -59,7 +59,7 @@ impl TelegramCredentialStore {
         match Self::entry(account_id)?.delete_credential() {
             Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
             Err(_) => Err(AppError::Crypto(
-                "TeleVault could not erase the Telegram API hash from the operating-system credential vault"
+                "TiVault could not erase the Telegram API hash from the operating-system credential vault"
                     .into(),
             )),
         }
@@ -98,7 +98,7 @@ impl MasterKeyStore {
                 .as_ref()
                 .ok_or_else(|| AppError::Crypto("The operating-system keychain is unavailable".into()))?
                 .get_password()
-                .map_err(|_| AppError::Crypto("TeleVault could not read its recovery key from the operating-system keychain".into()))?;
+                .map_err(|_| AppError::Crypto("TiVault could not read its recovery key from the operating-system keychain".into()))?;
             let key = decode_key(&encoded)?;
             return Ok(Self {
                 path,

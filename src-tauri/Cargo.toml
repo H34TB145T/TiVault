@@ -1,13 +1,13 @@
 [package]
-name = "televault"
-version = "0.1.0-alpha"
+name = "tivault"
+version = "0.1.1-alpha"
 description = "Unlimited-size personal file vault backed by Telegram Saved Messages"
 authors = ["H34TB145T"]
 edition = "2021"
 license = "MIT"
 
 [lib]
-name = "televault_lib"
+name = "tivault_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
