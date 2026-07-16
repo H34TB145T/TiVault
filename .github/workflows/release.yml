@@ -24,7 +24,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Install Linux desktop dependencies
         if: matrix.platform == 'ubuntu-24.04'
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libc++-dev libc++abi-dev
       - run: npm ci
       - uses: tauri-apps/tauri-action@v0
         env:

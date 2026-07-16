@@ -18,7 +18,7 @@ jobs:
         with:
           components: rustfmt
       - name: Install Linux desktop dependencies
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libc++-dev libc++abi-dev
       - run: npm ci
       - run: npm run build:desktop
       - run: npm test
