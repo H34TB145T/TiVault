@@ -112,9 +112,13 @@ jobs:
           tmp=$(mktemp -d)
           trap 'rm -rf "$tmp"' EXIT
           assets=$(gh release view "$RELEASE_TAG" --repo "$repo" --json assets)
-          asset_url() {
+          asset_name() {
             printf '%s' "$assets" | jq -er --arg suffix "$1" \
-              '.assets[] | select(.name | endswith($suffix)) | .url' | head -n 1
+              '.assets[] | select(.name | endswith($suffix)) | .name' | head -n 1
+          }
+          asset_url() {
+            printf 'https://github.com/%s/releases/download/%s/%s' \
+              "$repo" "$RELEASE_TAG" "$(asset_name "$1")"
           }
           mac_url=$(asset_url '.app.tar.gz')
           appimage_url=$(asset_url '.AppImage')
