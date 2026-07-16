@@ -32,7 +32,7 @@ jobs:
           - platform: Windows x64
             os: windows-2022
             targets: x86_64-pc-windows-msvc
-            args: --config src-tauri/tauri.release.conf.json
+            args: --bundles nsis --config src-tauri/tauri.release.conf.json
             checksum: windows-x64
     name: ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
