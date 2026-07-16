@@ -24,16 +24,19 @@ jobs:
             targets: x86_64-unknown-linux-gnu
             args: --config src-tauri/tauri.release.conf.json
             checksum: linux-x64
+            checksum_pattern: '(\.AppImage|\.deb|\.rpm)$'
           - platform: macOS Universal
             os: macos-14
             targets: x86_64-apple-darwin,aarch64-apple-darwin
             args: --target universal-apple-darwin --config src-tauri/tauri.release.conf.json
             checksum: macos-universal
+            checksum_pattern: '(\.dmg|\.app\.tar\.gz)$'
           - platform: Windows x64
             os: windows-2022
             targets: x86_64-pc-windows-msvc
             args: --bundles nsis --config src-tauri/tauri.release.conf.json
             checksum: windows-x64
+            checksum_pattern: '\.exe$'
     name: ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
@@ -79,18 +82,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+          ASSET_PATTERN: ${{ matrix.checksum_pattern }}
         run: |
-          $extensions = @('.dmg', '.AppImage', '.deb', '.rpm', '.msi', '.exe', '.tar.gz')
-          $files = Get-ChildItem 'src-tauri/target' -Recurse -File | Where-Object {
-            $name = $_.Name
-            $_.FullName -match '[\\/]bundle[\\/]' -and
-              -not $name.EndsWith('.sig') -and
-              ($extensions | Where-Object { $name.EndsWith($_) })
+          $release = gh api "repos/H34TB145T/TeleVault/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
+          $assets = $release.assets | Where-Object {
+            $_.name -match $env:ASSET_PATTERN -and -not $_.name.EndsWith('.sig')
           }
-          if (-not $files) { throw 'No installer artifacts were found for checksums.' }
-          $lines = $files | Sort-Object Name | ForEach-Object {
-            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-            "$hash  $($_.Name)"
+          if (-not $assets) { throw 'No uploaded installer assets were found for checksums.' }
+          $lines = $assets | Sort-Object name | ForEach-Object {
+            if (-not $_.digest -or -not $_.digest.StartsWith('sha256:')) {
+              throw "GitHub did not report a SHA-256 digest for $($_.name)."
+            }
+            "$($_.digest.Substring(7))  $($_.name)"
           }
           $checksumFile = "SHA256SUMS-${{ matrix.checksum }}.txt"
           $lines | Set-Content -Encoding utf8 $checksumFile
