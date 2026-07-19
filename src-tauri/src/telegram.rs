@@ -21,6 +21,7 @@ use zeroize::Zeroize;
 const AUTH_TIMEOUT: Duration = Duration::from_secs(45);
 const FILE_OPERATION_TIMEOUT: Duration = Duration::from_secs(6 * 60 * 60);
 const PREVIEW_RANGE_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+const RECOVERY_HISTORY_TIMEOUT: Duration = Duration::from_secs(45);
 
 fn is_vault_manifest_document(caption: &str, filename: &str) -> bool {
     caption.starts_with("#TiVaultManifest")
@@ -1379,10 +1380,19 @@ impl TelegramManager {
         let mut scanned = 0u64;
 
         loop {
-            let TdMessages::Messages(batch) =
-                functions::get_chat_history(chat_id, from_message_id, 0, 100, false, connection.id)
-                    .await
-                    .map_err(Self::td_error)?;
+            let response = timeout(
+                RECOVERY_HISTORY_TIMEOUT,
+                functions::get_chat_history(chat_id, from_message_id, 0, 100, false, connection.id),
+            )
+            .await
+            .map_err(|_| {
+                AppError::Telegram(
+                    "Timed out while scanning Saved Messages. Check the Telegram connection and try recovery again."
+                        .into(),
+                )
+            })?
+            .map_err(Self::td_error)?;
+            let TdMessages::Messages(batch) = response;
             let messages = batch.messages.into_iter().flatten().collect::<Vec<_>>();
             if messages.is_empty() {
                 break;
