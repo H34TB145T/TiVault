@@ -10,6 +10,12 @@ import { api } from "./lib/api";
 import { formatBytes, formatDate, formatEta } from "./lib/format";
 import type { Account, Category, Dashboard, HealthReport, LockStatus, LoginResult, PreviewInfo, RecoveryReport, RecoveryTestReport, ShareRecipient, Transfer, VaultFile, VaultFolderRecord, WatchFolder } from "./lib/types";
 import QRCode from "qrcode";
+import { getDocument, GlobalWorkerOptions, type PDFDocumentLoadingTask, type PDFDocumentProxy } from "pdfjs-dist";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+// Use TiVault's bundled worker rather than a browser PDF plug-in. Embedded web
+// views do not consistently provide a PDF plug-in, particularly on Linux.
+GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const categories: Array<{ name: Category; icon: typeof File; color: string }> = [
   { name: "All files", icon: FileBox, color: "#4b8cff" },
@@ -131,6 +137,79 @@ function EmptyState({ category, onUpload }: { category: Category; onUpload: () =
   );
 }
 
+function PdfPreview({ url, name, size }: { url: string; name: string; size: number }) {
+  const canvas = useRef<HTMLCanvasElement | null>(null);
+  const loadingTaskRef = useRef<PDFDocumentLoadingTask | null>(null);
+  const [document, setDocument] = useState<PDFDocumentProxy | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+    setDocument(null); setPageNumber(1); setError("");
+    if (size > 128 * 1024 * 1024) {
+      setError("This PDF is larger than 128 MB, so TiVault will not load it into memory for an inline preview. Download it to open it safely.");
+      return () => controller.abort();
+    }
+    void (async () => {
+      try {
+        const response = await fetch(url, { signal: controller.signal, credentials: "omit" });
+        if (!response.ok) throw new Error(`TiVault could not load this PDF (${response.status}).`);
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        if (cancelled) return;
+        const task = getDocument({ data: bytes, disableRange: true, disableStream: true, disableAutoFetch: true, enableXfa: false });
+        loadingTaskRef.current = task;
+        const loaded = await task.promise;
+        if (cancelled) return;
+        setDocument(loaded);
+      } catch (cause) {
+        if (!cancelled && !controller.signal.aborted) {
+          setError(cause instanceof Error ? cause.message : "TiVault could not render this PDF.");
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+      controller.abort();
+      const task = loadingTaskRef.current;
+      loadingTaskRef.current = null;
+      if (task) void task.destroy();
+    };
+  }, [size, url]);
+
+  useEffect(() => {
+    if (!document || error) return;
+    let cancelled = false;
+    let renderTask: ReturnType<Awaited<ReturnType<PDFDocumentProxy["getPage"]>>["render"]> | null = null;
+    void document.getPage(pageNumber).then((page) => {
+      if (cancelled || !canvas.current) return;
+      const deviceScale = Math.min(window.devicePixelRatio || 1, 2);
+      const viewport = page.getViewport({ scale: 1.2 * deviceScale });
+      const element = canvas.current;
+      element.width = Math.ceil(viewport.width);
+      element.height = Math.ceil(viewport.height);
+      element.style.width = `${Math.ceil(viewport.width / deviceScale)}px`;
+      element.style.height = `${Math.ceil(viewport.height / deviceScale)}px`;
+      renderTask = page.render({ canvas: element, viewport });
+      return renderTask.promise;
+    }).catch((cause) => {
+      if (!cancelled) setError(cause instanceof Error ? cause.message : "TiVault could not render this PDF page.");
+    });
+    return () => {
+      cancelled = true;
+      renderTask?.cancel();
+    };
+  }, [document, error, pageNumber]);
+
+  if (error) return <div className="preview-empty"><CircleAlert size={38} /><h3>PDF preview unavailable</h3><p>{error}</p></div>;
+  if (!document) return <div className="preview-empty"><RefreshCw className="spin" size={38} /><h3>Preparing PDF preview</h3><p>The PDF is processed locally in TiVault. No file is sent to a preview service.</p></div>;
+  return <div className="inline-pdf-renderer">
+    <div className="pdf-page-controls"><button className="icon-button" aria-label="Previous PDF page" disabled={pageNumber <= 1} onClick={() => setPageNumber((current) => Math.max(1, current - 1))}><ChevronLeft size={19} /></button><span>Page {pageNumber} of {document.numPages}</span><button className="icon-button" aria-label="Next PDF page" disabled={pageNumber >= document.numPages} onClick={() => setPageNumber((current) => Math.min(document.numPages, current + 1))}><ChevronRight size={19} /></button></div>
+    <div className="pdf-canvas-scroll"><canvas ref={canvas} aria-label={`Page ${pageNumber} of ${name}`} /></div>
+  </div>;
+}
+
 function LazyFileThumbnail({ file, compact = false }: { file: VaultFile; compact?: boolean }) {
   const host = useRef<HTMLSpanElement | null>(null);
   const [visible, setVisible] = useState(false);
@@ -138,6 +217,7 @@ function LazyFileThumbnail({ file, compact = false }: { file: VaultFile; compact
   const [textPreview, setTextPreview] = useState("");
   const [failed, setFailed] = useState(false);
   const visual = fileVisual(file); const Icon = visual.icon;
+  const isPdf = file.mimeType === "application/pdf" || /\.pdf$/i.test(file.name);
   useEffect(() => {
     const node = host.current;
     if (!node) return;
@@ -146,7 +226,7 @@ function LazyFileThumbnail({ file, compact = false }: { file: VaultFile; compact
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
-    if (!visible || file.thumbnail || failed) return;
+    if (!visible || file.thumbnail || failed || isPdf) return;
     let cancelled = false;
     let token = "";
     void api.startPreview(file.id).then((preview) => {
@@ -158,12 +238,12 @@ function LazyFileThumbnail({ file, compact = false }: { file: VaultFile; compact
       }
     }).catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; if (token) void api.stopPreview(token); };
-  }, [compact, failed, file.id, file.thumbnail, visible]);
+  }, [compact, failed, file.id, file.thumbnail, isPdf, visible]);
   const className = compact ? "lazy-thumbnail compact" : "lazy-thumbnail";
   if (file.thumbnail) return <span ref={host} className={className}><img src={file.thumbnail} alt="" /></span>;
   if (!failed && info?.kind === "image") return <span ref={host} className={className}><img src={info.url} alt="" onError={() => setFailed(true)} /></span>;
   if (!failed && info?.kind === "video") return <span ref={host} className={className}><video src={info.url} muted playsInline preload="metadata" onLoadedMetadata={(event) => { if (Number.isFinite(event.currentTarget.duration)) event.currentTarget.currentTime = Math.min(0.2, event.currentTarget.duration / 2); }} onError={() => setFailed(true)} /></span>;
-  if (!failed && !compact && info?.kind === "pdf") return <span ref={host} className={`${className} pdf-thumbnail`}><iframe src={info.url} title="" tabIndex={-1} sandbox="" /></span>;
+  if (isPdf) return <span ref={host} className={`${className} document-thumbnail`}><FileText size={28} /><small>PDF document</small></span>;
   if (!compact && (info?.kind === "text" || info?.kind === "document")) return <span ref={host} className={`${className} document-thumbnail`}><FileText size={28} /><small>{textPreview || file.name}</small></span>;
   return <span ref={host} className={className} style={{ color: visual.color }}>{visible && !failed && !info ? <RefreshCw className="spin" size={compact ? 16 : 28} /> : <Icon size={compact ? 19 : 46} strokeWidth={1.5} />}</span>;
 }
@@ -419,7 +499,7 @@ function FilePreviewModal({ file, onClose, onDownload, onPrevious, onNext, playi
     if (info.kind === "image") return <img className="inline-image-preview" src={info.url} alt={file.name} onError={() => setMediaError("The image format may not be supported by the system web view. Download it to open externally.")} />;
     if (info.kind === "video") return <video className="inline-video-preview" src={info.url} controls preload="metadata" playsInline onError={() => setMediaError("The video codec or container is not supported by the system player. Download it to open externally.")} />;
     if (info.kind === "audio") return <div className="inline-audio-preview"><AudioLines size={52} /><audio src={info.url} controls preload="metadata" onError={() => setMediaError("The audio codec is not supported by the system player.")} /></div>;
-    if (info.kind === "pdf") return <iframe className="inline-pdf-preview" src={info.url} title={`Preview of ${file.name}`} sandbox="" referrerPolicy="no-referrer" />;
+    if (info.kind === "pdf") return <PdfPreview url={info.url} name={file.name} size={info.size} />;
     if (info.kind === "text" || info.kind === "document") {
       if (!text && !error) return <div className="preview-empty"><RefreshCw className="spin" size={38} /><h3>Extracting safe text</h3><p>Scripts and document macros are not executed.</p></div>;
       return <div className="inline-text-wrap">{textTruncated && <div className="notice warning"><CircleAlert size={16} /> The inline preview is truncated. Download the file to read everything.</div>}<pre className="inline-text-preview">{text || "This document contains no extractable text."}</pre></div>;
